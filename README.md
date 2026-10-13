@@ -35,13 +35,22 @@ Core modules:
 - `server/app.py` – FastAPI dashboard + call log
 - `scripts/make_demo_recording.py` – generates demo call with Edge neural voices (free)
 
-## Quick start (no PBX / no keys)
+## Quick start (no PBX needed)
 ```bash
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env   # leave providers on "console", LLM on "ollama" or set a key
+cp .env.example .env   # text mode works with zero keys; add voice keys for speech
+python cli.py debug    # smoke test + dashboard (/) + interactive debug console (/debug)
+```
+Then open **`http://localhost:8000/debug`** to chat with (and hear 🎙️) Lina.
+Full local + voice guide: [`docs/LOCAL_VOICE_SETUP.md`](docs/LOCAL_VOICE_SETUP.md).
+
+Other commands:
+```bash
 python cli.py demo     # scripted smoke test using built-in mock LLM
 python cli.py console  # interactive terminal role-play
-python cli.py stream   # test ElevenLabs TTS (needs ELEVENLABS_API_KEY)
+python cli.py stream   # synthesize 3 Lina lines → saves data/stream_test/*.mp3 (needs ELEVENLABS_API_KEY)
+python cli.py serve    # production-style server (dashboard + ARI listener)
 ```
 
 ## Live deployment (VICIdial + Asterisk)
@@ -74,6 +83,7 @@ Free fallback: `python cli.py stream` uses Edge neural voices (`AriaNeural`) if 
 | `CALLING_HOUR_START` / `CALLING_HOUR_END` | compliance window (default 8–21) |
 
 ## Docs
+- [Local + Voice Setup](docs/LOCAL_VOICE_SETUP.md) — download, install, free voice keys, talk to Lina in 5 minutes.
 - [Budget Cost Structure + scientific diagrams](docs/BUDGET_COST_STRUCTURE.md) — per-call economics, monthly budgets (Pilot/Growth/Scale), architecture & call-flow diagrams.
 
 ## Notes
