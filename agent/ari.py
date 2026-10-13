@@ -111,8 +111,14 @@ class ARI:
     def run_forever(self, app: str, on_stasis_start) -> None:
         import websocket
 
-        ws_url = f"{self.config.ari_url.rstrip('/')}/ari/events?api_key={self.config.ari_username}:{self.config.ari_password}&app={app}"
-        ws = websocket.create_connection(ws_url)
+        base = self.config.ari_url.rstrip("/")
+        # websocket-client needs a ws(s):// URL, not http(s)://
+        if base.startswith("https://"):
+            base = "wss://" + base[len("https://"):]
+        elif base.startswith("http://"):
+            base = "ws://" + base[len("http://"):]
+        ws_url = f"{base}/ari/events?api_key={self.config.ari_username}:{self.config.ari_password}&app={app}"
+        ws = websocket.create_connection(ws_url, timeout=10)
         while True:
             msg = ws.recv()
             import json

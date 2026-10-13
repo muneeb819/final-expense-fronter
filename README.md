@@ -73,6 +73,9 @@ Free fallback: `python cli.py stream` uses Edge neural voices (`AriaNeural`) if 
 | `VICIDIAL_URL` / `VICIDIAL_USER` / `VICIDIAL_PASS` | disposition logging |
 | `CALLING_HOUR_START` / `CALLING_HOUR_END` | compliance window (default 8–21) |
 
+## Docs
+- [Budget Cost Structure + scientific diagrams](docs/BUDGET_COST_STRUCTURE.md) — per-call economics, monthly budgets (Pilot/Growth/Scale), architecture & call-flow diagrams.
+
 ## Notes
 - The live media path is **turn-based** (bot speaks, records caller until DTMF/timeout, then transcribes). For full-duplex low-latency audio, replace `agent/ari.py` with an ARI `externalMedia`/RTP bridge (see `agent/ari_streaming.py`).
 - Map VICIdial status codes (`Q`, `NI`, `INC`, `QC`) to your status categories in Admin → Status Categories.

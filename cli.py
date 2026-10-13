@@ -33,10 +33,14 @@ def cmd_demo():
 def cmd_serve():
     import uvicorn
 
-    from server.app import CONFIG, CALL_LOG, build_stasis_handler
+    from server.app import CONFIG, CALL_LOG
+    from agent.service import build_stasis_handler
     from agent.ari import ARI
 
     print(f"Starting web on {CONFIG.host}:{CONFIG.port} [tts={CONFIG.tts_provider}]")
+    print(f"  Dashboard:     http://{CONFIG.host}:{CONFIG.port}/")
+    print(f"  Debug console: http://{CONFIG.host}:{CONFIG.port}/debug")
+    print(f"  Health:        http://{CONFIG.host}:{CONFIG.port}/health")
     import threading
 
     def ari_thread():
@@ -44,14 +48,30 @@ def cmd_serve():
         try:
             ARI(CONFIG).run_forever(CONFIG.ari_app, handler)
         except Exception as e:
-            print(f"[ARI] not started: {e}")
+            print(f"[ARI] not connected (expected in debug mode without Asterisk): {e}")
 
     threading.Thread(target=ari_thread, daemon=True).start()
     uvicorn.run("server.app:app", host=CONFIG.host, port=CONFIG.port)
 
 
+def cmd_debug():
+    """Debug mode: force console providers + MockLLM fallback, run smoke test, then serve."""
+    import os
+
+    os.environ["DEBUG"] = "true"
+    os.environ.setdefault("STT_PROVIDER", "console")
+    os.environ.setdefault("TTS_PROVIDER", "console")
+    print("=== DEBUG MODE (no PBX / no keys required) ===")
+    print("  STT=console  TTS=console  LLM=mock-fallback")
+    cmd_demo()
+    print("\n=== Starting debug web server ===")
+    cmd_serve()
+
+
 def cmd_stream():
-    """Test ElevenLabs TTS streaming with Lina's voice."""
+    """Test ElevenLabs TTS streaming with Lina's voice (saves playable .mp3 files)."""
+    import os
+
     from agent.config import Config as C
     from agent.tts import TTS
 
@@ -59,16 +79,26 @@ def cmd_stream():
     if config.elevenlabs_api_key:
         config.tts_provider = "elevenlabs"
     print(f"=== STREAMING TTS TEST [{config.tts_provider}] voice={config.elevenlabs_voice} ===")
+    if config.tts_provider != "elevenlabs" or not config.elevenlabs_api_key:
+        print("NOTE: no ElevenLabs key — set TTS_PROVIDER=elevenlabs and ELEVENLABS_API_KEY in .env")
+        print("      to hear Lina's real voice. See docs/LOCAL_VOICE_SETUP.md")
+    outdir = os.path.join("data", "stream_test")
+    os.makedirs(outdir, exist_ok=True)
     tts = TTS(config)
     lines = [
         "Hello, this is Lina calling from Senior Resource Center. How are you doing today?",
         "I understand. We offer fixed-income coverage for final expenses. How young are you?",
         "That's great — you're eligible for a lower monthly premium. One moment, let me get you connected.",
     ]
-    for line in lines:
+    for i, line in enumerate(lines, 1):
         print(f"AGENT: {line}")
         audio = tts.synthesize(line)
         print(f"  [{len(audio)} bytes audio generated]")
+        if audio:
+            path = os.path.join(outdir, f"line{i}.mp3")
+            with open(path, "wb") as f:
+                f.write(audio)
+            print(f"  saved: {path}  (play it to hear Lina)")
     print("=== DONE ===")
 
 
@@ -104,10 +134,12 @@ def main():
         cmd_demo()
     elif cmd == "serve":
         cmd_serve()
+    elif cmd == "debug":
+        cmd_debug()
     elif cmd == "stream":
         cmd_stream()
     else:
-        print("Usage: python cli.py [console|demo|serve|stream]")
+        print("Usage: python cli.py [console|demo|serve|debug|stream]")
         sys.exit(1)
 
 
