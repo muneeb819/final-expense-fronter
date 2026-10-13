@@ -55,14 +55,15 @@ def cmd_serve():
 
 
 def cmd_debug():
-    """Debug mode: force console providers + MockLLM fallback, run smoke test, then serve."""
+    """Debug mode: run smoke test, then serve dashboard + debug console.
+
+    Respects .env providers (so ElevenLabs/Deepgram voice keys work in debug);
+    falls back to console providers + MockLLM when no keys are set.
+    """
     import os
 
     os.environ["DEBUG"] = "true"
-    os.environ.setdefault("STT_PROVIDER", "console")
-    os.environ.setdefault("TTS_PROVIDER", "console")
-    print("=== DEBUG MODE (no PBX / no keys required) ===")
-    print("  STT=console  TTS=console  LLM=mock-fallback")
+    print("=== DEBUG MODE (no PBX required) ===")
     cmd_demo()
     print("\n=== Starting debug web server ===")
     cmd_serve()
