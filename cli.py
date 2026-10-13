@@ -92,7 +92,12 @@ def cmd_stream():
     ]
     for i, line in enumerate(lines, 1):
         print(f"AGENT: {line}")
-        audio = tts.synthesize(line)
+        try:
+            audio = tts.synthesize(line)
+        except Exception as e:
+            print(f"  [TTS ERROR: {e}]")
+            print("  Check ELEVENLABS_API_KEY and your internet connection, then retry.")
+            break
         print(f"  [{len(audio)} bytes audio generated]")
         if audio:
             path = os.path.join(outdir, f"line{i}.mp3")
